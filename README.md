@@ -4,6 +4,10 @@
 
 The comprehensive README file is currently in the works and will be available soon.
 
+Here's a demo video to give you a glimpse of what's coming:
+
+
+
 https://github.com/user-attachments/assets/7b4dfc5a-fa0d-4d0c-8e38-1a23dec32efb
 
 
