@@ -2,9 +2,9 @@
 
 🚀 Thank you for checking out my project. I'm excited to share more details with you soon. Stay tuned!
 
-The comprehensive README file is currently in the works and will be available soon.
+- The comprehensive README file is currently in the works and will be available soon.
 
-Here's a demo video to give you a glimpse of what's coming:
+- Here's a demo video to give you a glimpse of what's coming:
 
 
 
