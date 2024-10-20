@@ -5,7 +5,7 @@ from ultralytics import YOLO
 import time
 from sort import Sort
 
-
+# Initialize the pretrained YOLO model
 model = YOLO(r"..\runs\detect\train6\weights\best.pt")
 classes = model.names
 
@@ -20,6 +20,11 @@ class Camera:
     
     
     def get_status(self):
+        """
+        Get the status of the camera (Online/Offline)
+        Returns:
+        str: The status of the camera
+        """
         cap = cv2.VideoCapture(self.url)
         if cap.isOpened():
             cap.release()
@@ -30,6 +35,11 @@ class Camera:
     
     
     def display(self):
+        """
+        Display the camera stream
+        Returns:
+        None 'Just displays the camera stream'
+        """
         cap = cv2.VideoCapture(self.url)
 
         while True:
@@ -55,7 +65,16 @@ class Camera:
         cap.release()
         cv2.destroyAllWindows()
     
-    def record(self, filename="output.mp4", display=False, skip=0):
+    def record(self, filename="output.mp4", display=False):
+        """
+        Record the camera stream can be called by display function by pressing 'r' and stopped by pressing 'q' which will save the recording as the filename provided.
+        Args:
+        filename (str): The name of the output file
+        display (bool): Display the recording status
+        
+        Returns:
+        None 'Just records the camera stream'
+        """
         cap = cv2.VideoCapture(self.url)
         ret, frame = cap.read()
         output = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*"mp4v"), 15, (frame.shape[1], frame.shape[0]))
@@ -153,7 +172,7 @@ class Camera:
                     if draw and Analyse: # Draw and Analyse
                         if self.number == 2:
                             # Draw the line
-                            cv2.line(frame, (80, 0), (1280, 890), (0, 0, 255), 2)
+                            cv2.line(frame, (0, 215), (1280, 995), (0, 0, 255), 2)
                             self.Analyse(tracker, TrackResults, shared_data) # This will adjust the position of the object and will affect the color of the bounding box.
                             # Draw color based on the position of the object
                             for obj in TrackResults:
@@ -254,6 +273,16 @@ class Camera:
         cv2.destroyAllWindows()
     
     def tracking(self, detections, tracker, shared_data={}):
+        """
+        Update the tracker with the detections and return the results
+        Args:
+        detections (numpy.ndarray): An array of detections of the form [x1, y1, x2, y2, confidence, object_class, Camera_number], [...], ...]
+        tracker (sort.Sort): The SORT tracker
+        shared_data (dict): A dictionary to store shared data between processes
+
+        Returns:
+        numpy.ndarray: An array of tracked objects of the form [[x1, y1, x2, y2, id, class_id, hit_streak, camera_id], [...], ...]
+        """
         if detections.any() == True:
             TrackResults = tracker.update(detections[:, :7], shared_data)  # Pass the bounding box and confidence score
         else:
@@ -262,6 +291,17 @@ class Camera:
         return TrackResults
     
     def Analyse(self, tracker, TrackResults, shared_data, box_area=None):
+        """
+        Analyse the objects in the frame and update the shared data
+        Args:
+        tracker (sort.Sort): The SORT tracker
+        TrackResults (numpy.ndarray): An array of tracked objects of the form [[x1, y1, x2, y2, id, class_id, hit_streak, camera_id], [...], ...]
+        shared_data (dict): A dictionary to store shared data between processes
+        box_area (numpy.ndarray): An array of points defining the house area in the form [(x1, y1), (x2, y2), (x3, y3), (x4, y4)] 'used only for Camera 4'
+
+        Returns:
+        None 'Just updates the shared data'
+        """
         shared_data["Right Now Outside"] = 0
         if TrackResults.size == 0:
             if self.number == 4:
@@ -282,6 +322,16 @@ class Camera:
                 
 
     def Analyse_Cam_2(self, tracker, shared_data, obj):
+        """
+        Analyse the objects in the frame from Camera 2 and update the shared data
+        Args:
+        tracker (sort.Sort): The SORT tracker
+        shared_data (dict): A dictionary to store shared data between processes
+        obj (numpy.ndarray): An array of the form [x1, y1, x2, y2, id, class_id, hit_streak, camera_id] 'single element of TrackResults'
+
+        Returns:
+        None 'Just updates the shared data'
+        """
         id = obj[4] - 1 # Because the id is 1-based
         id = int(id)
         position = self.check_car_position(obj[:4], obj[7])
@@ -306,6 +356,18 @@ class Camera:
 
 
     def Analyse_Cam_4(self, tracker, TrackResults, shared_data, obj, box_area):
+        """
+        Analyse the objects in the frame from Camera 4 and update the shared data
+        Args:
+        tracker (sort.Sort): The SORT tracker
+        TrackResults (numpy.ndarray): An array of tracked objects of the form [[x1, y1, x2, y2, id, class_id, hit_streak, camera_id], [...], ...]
+        shared_data (dict): A dictionary to store shared data between processes
+        obj (numpy.ndarray): An array of the form [x1, y1, x2, y2, id, class_id, hit_streak, camera_id] 'single element of TrackResults'
+        box_area (numpy.ndarray): An array of points defining the house area in the form [(x1, y1), (x2, y2), (x3, y3), (x4, y4)] 'used only for Camera 4'
+        
+        Returns:
+        None 'Just updates the shared data'
+        """
         found = False
         for i in TrackResults:
             if i[5] == 0:
@@ -350,6 +412,17 @@ class Camera:
             shared_data["Is car 1 at the house?"] = False
 
     def Analyse_Cam_6(self, tracker, TrackResults, shared_data, obj):
+        """
+        Analyse the objects in the frame from Camera 6 and update the shared data
+        Args:
+        tracker (sort.Sort): The SORT tracker
+        TrackResults (numpy.ndarray): An array of tracked objects of the form [[x1, y1, x2, y2, id, class_id, hit_streak, camera_id], [...], ...]
+        shared_data (dict): A dictionary to store shared data between processes
+        obj (numpy.ndarray): An array of the form [x1, y1, x2, y2, id, class_id, hit_streak, camera_id] 'single element of TrackResults'
+
+        Returns:
+        None 'Just updates the shared data'
+        """
         found = False
         for i in TrackResults:
             if i[5] == 0:
@@ -374,6 +447,22 @@ class Camera:
             shared_data["Is car 2 at the house?"] = False
                             
     def Drawing(self, frame, obj, classes, with_id, box_color=(0, 255, 0), class_color=(0, 255, 0), id_color=(0, 255, 0), font=cv2.FONT_HERSHEY_SIMPLEX, thickness=2):
+        """
+        Draw the bounding boxes on the frame
+        Args:
+        frame (numpy.ndarray): The frame to draw the bounding boxes on
+        obj (numpy.ndarray): An array of the form [x1, y1, x2, y2, id, class_id, hit_streak, camera_id] 'single element of TrackResults'
+        classes (list): A list of class names
+        with_id (bool): Whether to display the id of the object
+        box_color (tuple): The color of the bounding box
+        class_color (tuple): The color of the class name
+        id_color (tuple): The color of the id
+        font (cv2.FONT): The font to use for the text
+        thickness (int): The thickness of the bounding box and text
+
+        Returns:
+        numpy.ndarray: The frame with the bounding boxes drawn
+        """
         x1, y1, x2, y2 = obj[:4]
         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
         cv2.rectangle(frame, (x1, y1), (x2, y2), box_color, thickness)
@@ -387,6 +476,14 @@ class Camera:
 
     
     def calculate_middle_point(self, coordinates):
+        """
+        Calculate the middle point of the bounding box
+        Args:
+        coordinates (tuple): The (x1, y1, x2, y2) coordinates of the bounding box
+
+        Returns:
+        tuple: The (x, y) coordinates of the middle point 
+        """
         x1, y1, x2, y2 = coordinates
         x = (x1 + x2) / 2
         y = (y1 + y2) / 2
@@ -394,15 +491,13 @@ class Camera:
     
     def object_position(self, line_coordinates, object_point):
         """
-        Determines the relative position of an object to a line defined by start_point and end_point.
-        
+        Determine the position of the object relative to the line
         Args:
-            start_point (tuple): The (x, y) coordinates of the line's starting point.
-            end_point (tuple): The (x, y) coordinates of the line's end point.
-            object_point (tuple): The (x, y) coordinates of the object.
-            
+        line_coordinates (list): A list of two tuples [(x1, y1), (x2, y2)] defining the line
+        object_point (tuple): The (x, y) coordinates of the object
+
         Returns:
-            str: A string indicating whether the object is 'above', 'below'.
+        str: The position of the object relative to the line ('above' or 'below')
         """
         x1, y1 = line_coordinates[0]
         x2, y2 = line_coordinates[1]
@@ -418,16 +513,34 @@ class Camera:
             return "below"
             
     
-    def check_car_position(self, coordinates, camera_number): # Camera 2
+    def check_car_position(self, coordinates, camera_number):
+        """
+        Determine the position of the car relative to the line in camera 2 but it can used for any camera
+        Args:
+        coordinates (tuple): The (x1, y1, x2, y2) coordinates of the bounding box
+        camera_number (int): The camera number
+
+        Returns:
+        str: The position of the car relative to the line ('Left' or 'Right')
+        """
         if camera_number == 2:
-            line_coordinates = [(80, 0), (1280, 890)]
+            line_coordinates = [(0, 215), (1280, 995)]
             position = self.object_position(line_coordinates, self.calculate_middle_point(coordinates))
             if position == "above": # This is must be changed based on the used camera.
                 return "Left"
             else:
                 return "Right"
     
-    def check_person_house_position(self, box_area, point): # Camera 4
+    def check_person_house_position(self, box_area, point):
+        """
+        Determine the position of the person relative to the house area in camera 4 but it can used for any camera
+        Args:
+        box_area (numpy.ndarray): An array of points defining the house area in the form [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
+        point (tuple): The (x, y) coordinates of the person
+
+        Returns:
+        str: The position of the person relative to the house area ('Inside' or 'Outside')
+        """
         result = cv2.pointPolygonTest(box_area, (int(point[0]), int(point[1])), False)
         if result >= 0:
             return "Inside"
@@ -436,6 +549,11 @@ class Camera:
             
 
     def InitializeInOutHouse(self):
+        """
+        Initialize the house area for Camera 4
+        Returns:
+        numpy.ndarray: An array of points defining the house area in the form [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
+        """
         points = [(177, 479), (416, 473), (438, 661), (167, 669)]
 
         # Convert the points to a numpy array
@@ -451,7 +569,23 @@ class Camera:
         return box_area
 
     def is_car(self, obj):
+        """
+        Check if the object is a car
+        Args:
+        obj (numpy.ndarray): An array of the form [x1, y1, x2, y2, id, class_id, hit_streak, camera_id] 'single element of TrackResults'
+        
+        Returns:
+        bool: True if the object is a car, False otherwise
+        """
         return obj[5] == 0
     
     def is_person(self, obj):
+        """
+        Check if the object is a person
+        Args:
+        obj (numpy.ndarray): An array of the form [x1, y1, x2, y2, id, class_id, hit_streak, camera_id] 'single element of TrackResults'
+        
+        Returns:
+        bool: True if the object is a person, False otherwise
+        """
         return obj[5] == 1

@@ -1,5 +1,4 @@
- import time
-import math
+import time
 import multiprocessing
 import sys
 import os
@@ -10,11 +9,34 @@ from Classes import Camera
 import requests
 
 def process_camera(camera, shared_data, write, threshold, display, iou, draw, track, Analyse):
+    """
+    Process the camera stream for object detection
+    args:
+    camera (Camera): Camera object
+    shared_data (dict): A dictionary to store shared data between processes
+    write (bool): wheather to write the output to a file or not
+    threshold (float): Confidence threshold
+    display (bool): wheather to display the output or not
+    iou (float): Intersection over Union threshold
+    draw (bool): wheather to draw the bounding boxes on the frame or not
+    track (bool): wheather to track the objects in the frame or not
+    Analyse (bool): wheather to analyse the objects in the frame or not
+
+    Returns:
+    None 'Just displays the frame with/out bounding boxes and prints the shared data'
+    """
     filename = f"detection_output_{camera.number}.mp4"
     camera.detect(write, filename, threshold, display, iou, draw, track, Analyse, shared_data)
     print(shared_data)
 
 def send_push_notification(message):
+    """
+    Send a push notification using the Pushover API
+    Args:
+    message (str): The message to send
+    Returns:
+    None
+    """
     url = 'https://api.pushover.net/1/messages.json'
     payload = {
         'token': 'TokenID',  # Replace with your Pushover application token
@@ -25,6 +47,13 @@ def send_push_notification(message):
     print('Notification sent, status:', response.status_code)
 
 def monitor_shared_data(shared_data):
+    """
+    Monitor the shared data for any anomalies and send push notifications
+    Args:
+    shared_data (dict): A dictionary to store shared data between processes
+    Returns:
+    None 'Just modifies the shared data and sends push notifications'
+    """
     notified_outside = False  # Flag to track notification for "Right Now Outside"
     notified_entered = False  # Flag to track notification for "Entered The House"
     
@@ -68,6 +97,13 @@ def monitor_shared_data(shared_data):
 
 
 def json_serializable(data):
+    """
+    Convert the data to a JSON serializable format because multiprocessing.Manager does not support all data types
+    Args:
+    data: The data to convert in form of a ListProxy
+    Returns:
+    The converted data in a regular list
+    """
     if isinstance(data, multiprocessing.managers.ListProxy):
         return list(data)
     return data
@@ -87,7 +123,7 @@ if __name__ == "__main__":
         shared_data = manager.dict()
         shared_data["logs"] = manager.list()
 
-        # Start the monitoring process
+        # Start the monitoring process in a separate process
         monitor_process = multiprocessing.Process(target=monitor_shared_data, args=(shared_data,))
         monitor_process.start()
 
@@ -95,6 +131,7 @@ if __name__ == "__main__":
         pool = multiprocessing.Pool(processes=5)
         print(multiprocessing.cpu_count())
         
+        # Set the arguments for the process_camera function
         write = True
         threshold = 0.6
         display = True
@@ -103,6 +140,7 @@ if __name__ == "__main__":
         track = True
         Analyse = True
 
+        # Set the initial values for the shared data "This is important to avoid logical errors"
         if Analyse:
             shared_data["Right_to_left"] = 0
             shared_data["Left_to_right"] = 0
@@ -113,7 +151,7 @@ if __name__ == "__main__":
             shared_data["Is car 1 at the house?"] = None
             shared_data["Is car 2 at the house?"] = None
 
-        # Use apply_async for asynchronous processing and pass the arguments
+        # Use apply_async for asynchronous processing and pass the arguments 
         for camera in numbers:
             pool.apply_async(process_camera, args=(camera, shared_data, write, threshold, display, iou, draw, track, Analyse))
 
