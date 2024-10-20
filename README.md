@@ -89,7 +89,7 @@ These features will be previewed next
 --- 
 #### Tracking cars movement (Right to Left / Left to Right)
  
-![](https://github.com/YousofHajHasan/RSAS/tree/main/gifs/gif1.gif)
+![](https://github.com/YousofHajHasan/RSAS/blob/main/gifs/gif1.gif)
 
 The idea of ​​this feature is to count the number of cars moving between two areas and draw a box based on the area the vehicle is currently in.
 (**Left** area as **Blue**) (**Right** area as **Red**).
