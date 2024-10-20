@@ -14,13 +14,13 @@ def process_camera(camera, shared_data, write, threshold, display, iou, draw, tr
     args:
     camera (Camera): Camera object
     shared_data (dict): A dictionary to store shared data between processes
-    write (bool): wheather to write the output to a file or not
+    write (bool): whether to write the output to a file or not
     threshold (float): Confidence threshold
-    display (bool): wheather to display the output or not
+    display (bool): whether to display the output or not
     iou (float): Intersection over Union threshold
-    draw (bool): wheather to draw the bounding boxes on the frame or not
-    track (bool): wheather to track the objects in the frame or not
-    Analyse (bool): wheather to analyse the objects in the frame or not
+    draw (bool): whether to draw the bounding boxes on the frame or not
+    track (bool): whether to track the objects in the frame or not
+    Analyse (bool): whether to analyse the objects in the frame or not
 
     Returns:
     None 'Just displays the frame with/out bounding boxes and prints the shared data'
