@@ -154,7 +154,7 @@ After an event has been identified and logged, the Sending step takes over. This
 
 Here's a sample of the output:
 <p align="center">
-  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/Noti.jpg" width="50%" />
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/Noti.jpg" width="30%" />
 </p>
 
 ## Testing
