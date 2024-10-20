@@ -89,7 +89,9 @@ These features will be previewed next
 --- 
 #### Tracking cars movement (Right to Left / Left to Right)
  
-![](https://github.com/YousofHajHasan/RSAS/blob/main/gifs/gif1.gif)
+<p align="center">
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/gif1.gif" />
+</p>
 
 The idea of ​​this feature is to count the number of cars moving between two areas and draw a box based on the area the vehicle is currently in.
 (**Left** area as **Blue**) (**Right** area as **Red**).
@@ -113,7 +115,9 @@ After recording this information, the data can be used to compare different time
 ---
 #### Determine in/out the house
 
-![](https://github.com/YousofHajHasan/RSAS/blob/main/gifs/gif2.gif)
+<p align="center">
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/gif2.gif" width="70%" />
+</p>
 
 This feature is considered one of the security features that determines a person's position, whether inside or outside the house. (**Inside** as **Red**) (**Outside** as **Blue**).
 
@@ -149,7 +153,6 @@ The Monitoring step involves constantly scanning the video feeds for predefined 
 After an event has been identified and logged, the Sending step takes over. This step dispatches notifications to the appropriate recipients using the `send_push_notification` function. This function integrates with the Pushover API to send out real-time alerts. It constructs the message payload with the necessary details, such as the user's token and message content, and then posts this data to the Pushover service.
 
 Here's a sample of the output:
-
 <p align="center">
   <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/Noti.jpg" width="50%" />
 </p>
