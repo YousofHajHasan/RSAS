@@ -103,7 +103,7 @@ Based on the output sign, we can determine the area that this car is actually in
 
 The following picture explains it:
 
-![](https://raw.githubusercontent.com/YousofHajHasan/RSAS/main/gifs/CrossProduct.png)
+![](https://github.com/YousofHajHasan/RSAS/blob/main/gifs/CrossProductExplained.png)
 
 After recording this information, the data can be used to compare different times of the day, traffic, or any other related analysis. It can also be done for people, not only cars, but with adjustments to the code.
 
@@ -146,7 +146,7 @@ The Monitoring step involves constantly scanning the video feeds for predefined 
 After an event has been identified and logged, the Sending step takes over. This step dispatches notifications to the appropriate recipients using the `send_push_notification` function. This function integrates with the Pushover API to send out real-time alerts. It constructs the message payload with the necessary details, such as the user's token and message content, and then posts this data to the Pushover service.
 
 Here's a sample of the output:
-![](https://github.com/YousofHajHasan/RSAS/tree/main/gifs/Noti.jpg)
+![](gifs/Noti.jpg)
 
 ## Testing
 
