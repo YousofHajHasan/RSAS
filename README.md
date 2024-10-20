@@ -103,7 +103,7 @@ Based on the output sign, we can determine the area that this car is actually in
 
 The following picture explains it:
 
-![](https://github.com/YousofHajHasan/RSAS/blob/main/gifs/CrossProduct.png)
+![](https://raw.githubusercontent.com/YousofHajHasan/RSAS/main/gifs/CrossProduct.png)
 
 After recording this information, the data can be used to compare different times of the day, traffic, or any other related analysis. It can also be done for people, not only cars, but with adjustments to the code.
 
