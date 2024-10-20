@@ -2,11 +2,11 @@ import time
 import multiprocessing
 import sys
 import os
-import torch
 import json
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from Classes import Camera
 import requests
+# import torch
 
 def process_camera(camera, shared_data, write, threshold, display, iou, draw, track, Analyse):
     """
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     camera6 = Camera(6)
     numbers = [camera1, camera2, camera3, camera4, camera6]
 
-    print(torch.cuda.is_available())
+    # print(torch.cuda.is_available())
 
     # Create a Manager to share data between processes
     with multiprocessing.Manager() as manager:
