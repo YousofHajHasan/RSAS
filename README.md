@@ -1,4 +1,3 @@
-
 # Real-time Security & Analytics System (RSAS)  
   
 ## Description  
@@ -18,7 +17,8 @@ The following are describing the workflow of this project:
 - Notification Sending  
 	- Monitoring
 	- Sending
-- Testing  
+- Testing 
+	- Skipping Mechanism
 - What's Next !!  
   
 ## Sample Output  
@@ -44,7 +44,7 @@ pip install requirements.txt
 
 ## RTSP Connection
 
-My cameras are connected to a DVR by HIKVision, which can create **RTSP** streams.
+My cameras are connected to a DVR by HIKVision, which can create **RTSP** streams. Each camera broadcasts a live stream with 15 FPS.
 
 To connect to HIKVision DVRs using Python, you need the following details:
 1. Login Credentials for the device. (Username, Password)
@@ -64,6 +64,8 @@ For this version, I've trained a **YOLOv8** on a custom dataset that I've genera
 For now, the model type was the (**s**) model because of its size so that I can detect objects with acceptable accuracy with real-time processing based on my machine's specs.
 
 Since each camera has a different angle and will detect shapes of various sizes and appearances among the other cameras, I think one of the improvements for the case of **Multiprocessing** with the **Object Detection** model is to create a specific Smaller AI model for each camera, so, I can have better results for each camera with faster speed. This modification needs more work on preparing the dataset and in the training phase.
+
+**The model works well in the morning and evening, even when the lighting changes.*
 
 ## Object Tracking
 As mentioned earlier, I have used **SORT** (Simple Online and Realtime Tracking) algorithm to track the detected objects.
@@ -148,6 +150,13 @@ The notification process is broken down into two critical steps: Monitoring and 
 #### Monitoring
 The Monitoring step involves constantly scanning the video feeds for predefined triggers, such as unauthorized access or unusual activities. This process is primarily handled by the `monitor_shared_data` function, which actively checks the shared data repository for any changes that match the alert criteria. The function continuously evaluates the data collected from all camera feeds, detecting anomalies or events that require immediate attention. Once a relevant event is detected, the system logs the event and prepares the necessary information for the next step in the notification process.
 
+Sample of the resulting JSON file:
+
+<p align="center">
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/JSONexample.PNG" width="30%" />
+</p>
+
+---
 #### Sending 
 
 After an event has been identified and logged, the Sending step takes over. This step dispatches notifications to the appropriate recipients using the `send_push_notification` function. This function integrates with the Pushover API to send out real-time alerts. It constructs the message payload with the necessary details, such as the user's token and message content, and then posts this data to the Pushover service.
@@ -158,7 +167,78 @@ Here's a sample of the output:
 </p>
 
 ## Testing
+Any testing was done locally on my pc, which is AMD Ryzen 5 3600 6-core processor, with RTX 2070 and 32 GB RAM.
+
+- **4 Cameras** (The most important ones)
+
+This case was examined for nearly two hours, resulting in zero delay. 
+
+CPU usage: an average of 45%
+GPU usage: an average of 70%
+RAM usage: an average of 40%
+
+Example of the resources consumption
+
+<p align="center">
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/4 cameras.jpg" width="30%" />
+</p>
+
+- **7 Cameras** (All of them)
+
+
+This test case has led to a massive increase in CPU usage with similar GPU usage values. 
+
+CPU usage: an average of 90%
+GPU usage: an average of 75%
+RAM usage: an average of 48%
+
+Example of resource consumption
+
+<p align="center">
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/7 cameras.jpg" width="30%" />
+</p>
+
+Because of the high load on the CPU, a delay occurred in some cameras, so I had to come up with a temporary solution for that, which is frame skipping.
+
+#### Skipping Mechanism
+
+The skipping mechanism in this function ensures smooth real-time performance by skipping frames when processing takes too long. Here's a breakdown:
+
+1.  **Target Frame Rate:**
+    -   The function aims to process frames at 15 FPS, meaning each frame should ideally take about 0.0667 seconds.
+
+
+2.  **Elapsed and Threshold Time Calculation:**
+    -   For each frame, the function calculates the target time for the next frame and a threshold time to monitor delays. The threshold ensures the system doesn’t fall too far behind.
+
+
+3.  **Skipping Condition:**
+    -   If the elapsed time exceeds the calculated threshold, the **skip flag** is activated. This indicates that the system is falling behind the target frame rate.
+
+
+4.  **Skipping Logic:**
+    -   On the next loop iteration, if the skip flag is set, the function skips the current frame and immediately moves to the next one without processing it. The skip flag is then reset. This means, in the worst case, 6-7 frames will be processed for each second.
+
+
+5.  **Impact of Skipping:**
+    -   Skipping prevents the system from getting stuck trying to process every frame, maintaining responsiveness. Although some frames may be dropped, this ensures the system stays as close as possible to real-time performance.
+
+6. **Drawbacks:**
+	- Even if it's a good approach, if the load is too heavy, the 6-7 frames skipping is not enough; thus, more intelligent mechanisms, such as skipping a higher number of frames or resetting the camera to the current frame, are needed.
+**Considering that hardware upgrades are not an option.*
 
 ## What's Next
 
+There are a lot of improvements that I can think of to add to the project, but for now, I want to consider this as the first version and give a glimpse of what I can come up with using CCTV cameras and the features that can be added based on needs.
 
+Here are some improvements I think of:
+
+- Adding a user-interface to deal with the cameras.
+- As mentioned earlier, a better, more specifically trained model for each camera is needed.
+- Some improvements in the tracking algorithms to avoid any object loss.
+- Adding a recognition instead of simple tracking so that people can be recognized by their appearance, and the same thing for cars, by identifying the car's plate.
+- Adding recognition will lead to considerable security and monitoring system modifications. 
+- Adding more features, such as identifying if someone is waiting on the door and awaiting a response.
+- Integrating the real-time extracted data with a chatbot that can interact with user's questions and answer them based on available data. 
+
+### I would be delighted to receive feedback on the project or any suggestions for improvements and new features.
