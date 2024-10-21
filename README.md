@@ -1,3 +1,4 @@
+
 # Real-time Security & Analytics System (RSAS)  
   
 ## Description  
@@ -240,5 +241,6 @@ Here are some improvements I think of:
 - Adding recognition will lead to considerable security and monitoring system modifications. 
 - Adding more features, such as identifying if someone is waiting on the door and awaiting a response.
 - Integrating the real-time extracted data with a chatbot that can interact with user's questions and answer them based on available data. 
+- Finally, Integrating the system with the cloud to work 24/7 and be an absolute security and analysis system.
 
 ### I would be delighted to receive feedback on the project or any suggestions for improvements and new features.
