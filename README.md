@@ -185,10 +185,10 @@ CPU usage: an average of 45%
 GPU usage: an average of 70%
 RAM usage: an average of 40%
 
-Example of the resources consumption
+Example of resource consumption
 
 <p align="center">
-  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/4 cameras.jpg" width="30%" />
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/4 cameras.png" width="30%" />
 </p>
 
 - **7 Cameras** (All of them)
@@ -203,7 +203,7 @@ RAM usage: an average of 48%
 Example of resource consumption
 
 <p align="center">
-  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/7 cameras.jpg" width="30%" />
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/7 cameras.png" width="30%" />
 </p>
 
 Because of the high load on the CPU, a delay occurred in some cameras, so I had to come up with a temporary solution for that, which is frame skipping.
