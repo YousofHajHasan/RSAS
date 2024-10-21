@@ -31,7 +31,7 @@ The following are describing the workflow of this project:
   <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/DemoVid.gif" />
 </p>
   
-## General Structure <a id="General-Structure"></a>
+## General Structure <a id="general-structure"></a>
   
 ### Files Overview  <a id="Files-Overview"></a>
 - `classes.py` This file contains the `Camera` class, which is considered the core element in this project; it contains multiple functions used in the project.  
