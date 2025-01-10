@@ -1,5 +1,10 @@
-opencv-python
-numpy
+opencv-python==4.10.0
+numpy==1.26.4
 keyboard
-ultralytics
-requests
+ultralytics==8.3.55
+requests==2.32.3
+
+
+
+
+
