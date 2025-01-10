@@ -30,6 +30,9 @@ The following are describing the workflow of this project:
 <p align="center">
   <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/DemoVid.gif" />
 </p>
+
+## What's new?!
+I've added the VisualizationSimulator.py file, which generates a 3D map of the house along with the road and simulates the movement of objects asynchronously using different processors. This file will be integrated with the projection of objects captured by the cameras in real-time.  
   
 ## General Structure <a id="general-structure"></a>
   
