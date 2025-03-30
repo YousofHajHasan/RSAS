@@ -33,6 +33,10 @@ The following are describing the workflow of this project:
 
 ## What's new?!
 I've added the VisualizationSimulator.py file, which generates a 3D map of the house along with the road and simulates the movement of objects asynchronously using different processors. This file will be integrated with the projection of objects captured by the cameras in real-time.  
+
+<p align="center">
+  <img src="https://github.com/YousofHajHasan/RSAS/blob/main/gifs/Screencast from 2025-03-30 15-12-17.gif" />
+</p>
   
 ## General Structure <a id="general-structure"></a>
   
