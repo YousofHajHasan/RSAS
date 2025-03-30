@@ -4,19 +4,62 @@ import keyboard
 from ultralytics import YOLO
 import time
 from sort import Sort
-
-# Initialize the pretrained YOLO model
-model = YOLO(r"..\runs\detect\train6\weights\best.pt")
-classes = model.names
+from ultralytics import RTDETR
+import torch
+from transformers import DetrForObjectDetection, DetrImageProcessor
+from queue import Queue
+from threading import Thread
+import multiprocessing
+from transformers import RTDetrForObjectDetection, RTDetrImageProcessor
 
 class Camera:
-    def __init__(self, number, fps=15):
+    def __init__(self, number, fps=10):
         self.number = number
         self.name = "Camera " + str(number)
-        self.url = f"rtsp://LoginCredentials@IP:Port/Streaming/Channels/{number}01"
-        # Send to function called "get_status" to get the status of the camera
+        self.url = (rf"rtsp://admin:hik-2022@192.168.100.3:554/Streaming/Channels/{number}01")
         self.status = self.get_status()
         self.fps = fps
+        self.model = None
+        self.frame_queue = multiprocessing.Queue(maxsize=900)
+        self.running = True
+        self.capture_thread = None
+    
+    def start_thread(self):
+        """
+        Start the thread for capturing frames
+        Returns:
+        None 'Just starts the thread'
+        """
+        self.capture_thread = Thread(target=self.read_frames, daemon=True)
+        self.capture_thread.start()
+
+    def stop_thread(self):
+        """
+        Stop the thread for capturing frames
+        Returns:
+        None 'Just stops the thread'
+        """
+        self.running = False
+        if self.capture_thread:
+            self.capture_thread.join()
+
+    def read_frames(self):
+        """
+        Read frames from the camera stream using a single thread
+        Returns:
+        None 'Just reads the frames'
+        """
+        cap = cv2.VideoCapture(self.url)
+
+        while self.running:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            if self.frame_queue.full():
+                self.frame_queue.get()
+            self.frame_queue.put(frame)
+
+        cap.release()
     
     
     def get_status(self):
@@ -32,6 +75,34 @@ class Camera:
         else:
             cap.release()
             return "Offline"
+    
+    def initialize_model(self):
+        """
+        Initialize the model for object detection
+        Returns:
+        model: The initialized model
+        """
+        if self.number == 1:
+            model = YOLO(rf"/home/yousof/Desktop/runs/detect/Cam1/weights/best.pt")
+            imgsz = 1024
+            return model, imgsz
+        elif self.number == 2:
+            image_processor = RTDetrImageProcessor.from_pretrained("/home/yousof/Downloads/custom-model4-20250330T103957Z-001/custom-model4")
+            model = RTDetrForObjectDetection.from_pretrained("/home/yousof/Downloads/custom-model4-20250330T103957Z-001/custom-model4")
+            model.to("cuda")
+            imgsz = 640
+            classes = {0: "car", 1: "person"}
+            return model, imgsz, image_processor, classes
+        elif self.number == 3:
+            model = YOLO(rf"/home/yousof/Desktop/runs/detect/Cam3/weights/best.pt")
+            imgsz = 1024
+            classes = {0: "car", 1: "person"}
+            return model, imgsz
+        else:
+            model = YOLO("yolov8n.pt")
+            imgsz = 640
+            classes = {0: "car", 1: "person"}
+            return model, imgsz
     
     
     def display(self):
@@ -108,7 +179,7 @@ class Camera:
         output.release()
         cv2.destroyAllWindows()
 
-    def detect(self, write=False, filename="detection.mp4", threshold=0.5, display=True, iou=0.5, draw=True, track=True, Analyse=False, shared_data={}):
+    def detect(self, write=False, filename="detection.mp4", threshold=0.5, display=True, iou=0.5, draw=True, track=True, Analyse=False, projection=False, flags={}, cubes=[], shared_data={}):
         """
         Detect objects in the camera stream
 
@@ -121,20 +192,33 @@ class Camera:
         track (bool): Track the objects in the frame
         Analyse (bool): Analyse the objects in the frame
         shared_data (dict): A dictionary to store shared data between processes
+        projection (bool): Project the objects to the top view
+        flags (dict): A dictionary of flags to control the projection
+        cubes (list): A list of points to be projected 
 
         Returns:
-        None Just displays the frame with/out bounding boxes
+        None
         """
-        cap = cv2.VideoCapture(self.url)
+        if self.number == 2: # RT-DETR
+            model, imgsz, imageProcessor, classes = self.initialize_model()
+        else:
+            model, imgsz = self.initialize_model()
+            classes = model.names
+
+        self.start_thread() # Start the thread for capturing frames
         
-        ret, frame = cap.read()
+        while True: # Wait for the first frame
+            if not self.frame_queue.empty():
+                frame = self.frame_queue.get()
+                break
+
         skip = False
         frame_time = 1 / 15
         First_Start = time.time()
         frame_counter = 0
         
         if track:
-            tracker = Sort(max_age=30, min_hits=5, iou_threshold=0.3)  # Initialize the SORT tracker
+            tracker = Sort(max_age=25, min_hits=1, iou_threshold=0.2)  # Initialize the SORT tracker
 
         if write:
             output = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*"mp4v"), 15, (frame.shape[1], frame.shape[0]))
@@ -142,37 +226,84 @@ class Camera:
         if Analyse and self.number == 4:
             box_area = self.InitializeInOutHouse()
 
+        if projection:
+            if self.number == 1:
+                homography_matrix = np.array([[ 2.04672515e-02, -8.48785847e-03,  2.56547037e+02],
+                                                [-4.05332877e-01,  4.28313480e-01,  7.25008701e+02],
+                                                [-4.46144864e-04,  1.15867108e-03,  1.00000000e+00]])
+            elif self.number == 2:
+                homography_matrix = np.array([[-1.20471032e+00,  2.41704430e+00, -2.73333414e+01],
+                                                [-5.77841615e-02,  2.92619286e+00, -9.48424194e+02],
+                                                [-2.49322482e-03,  1.14407240e-02,  1.00000000e+00]])
+            elif self.number == 3: 
+                homography_matrix = np.array([[-2.25083434e-01,  2.00520109e-02,  3.27833955e+02],
+                                                [-2.10716311e-01,  1.41898924e-01,  1.84141253e+02],
+                                                [-5.80459009e-04,  3.61096970e-04,  1.00000000e+00]])
+            else:
+                print("Homography matrix not found for this camera, please change the projection parameter to False.")
+                self.running = False
+
         print("Detecting... Press 'q' to stop detection")
-        while True:
+        while self.running:
             if skip:
                 print("Skipping...")
                 skip = False
                 frame_counter += 1
+                # Remove the first frame from the queue
+                if not self.frame_queue.empty():
+                    self.frame_queue.get()
                 continue
-            start = time.time()
-            ret, frame = cap.read()
 
-            if not ret or (cv2.waitKey(1) & 0xFF == ord('q')):
+            while True:
+                if not self.frame_queue.empty():
+                    frame = self.frame_queue.get()
+                    break
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-
-            results = model(frame, iou=iou, conf=threshold, verbose=False)
+            
+            if self.number == 2:
+                results = self.process_rtDETR_frame(frame, model, imageProcessor)
+            if self.number != 2:
+                results = model.predict(frame, iou=iou, conf=threshold, verbose=False, imgsz=imgsz)
+            
             for result in results:
                 boxes = result.boxes
                 detections = []
                 for box in boxes:
-                    x1, y1, x2, y2 = box.xyxy[0]
-                    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-                    cls = box.cls.item()
-                    conf = box.conf.item()
+                    if self.number == 2:
+                        x1, y1, x2, y2 = box[:4]
+                        conf = box[4]
+                        cls = box[5] 
+                    else:
+                        x1, y1, x2, y2 = box.xyxy[0]
+                        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                        cls = box.cls.item()
+                        conf = box.conf.item()
                     detections.append([x1, y1, x2, y2, conf, cls, self.number])
+
+                    if projection and not track:
+                        self.projection_manager(homography_matrix, (x1, y1, x2, y2), flags, cubes, None, cls)
+
+                if projection and not track:
+                    flags[self.number].value = True # Reset the flag to stop adding new positions to the cubes list
+                    # This flag will prevent the addition of new positions to the cubes list until they are visualized.
+
                 detections = np.array(detections)
+
                 if track:
                     TrackResults = self.tracking(detections, tracker, shared_data)
+
+                    if projection:
+                        for obj in TrackResults:
+                            self.projection_manager(homography_matrix, (obj[0], obj[1], obj[2], obj[3]), flags, cubes, obj[4], obj[5])
+                    flags[self.number].value = True # Reset the flag to stop adding new positions to the cubes list
+                    # This flag will prevent the addition of new positions to the cubes list until they are visualized.
 
                     if draw and Analyse: # Draw and Analyse
                         if self.number == 2:
                             # Draw the line
-                            cv2.line(frame, (0, 215), (1280, 995), (0, 0, 255), 2)
+                            cv2.line(frame, (1050, 380), (1450, 690), (0, 0, 255), 2)
                             self.Analyse(tracker, TrackResults, shared_data) # This will adjust the position of the object and will affect the color of the bounding box.
                             # Draw color based on the position of the object
                             for obj in TrackResults:
@@ -248,15 +379,15 @@ class Camera:
                 if display:
                     cv2.namedWindow("Camera Stream", cv2.WINDOW_NORMAL)
                     cv2.imshow("Camera Stream", frame)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
 
             elapsed_time = time.time() - First_Start
-            # print("Processing time for this frame", time.time() - start)
-            # print(elapsed_time,"elapsed time for frame", frame_counter + 1)
 
             # Calculate the time at which the next frame should be displayed
             target_time = (frame_counter + 1) * frame_time
             threshold_time = (frame_counter + 90) * frame_time
-            # print("threshold_time", threshold_time, "for the frame", frame_counter + 90)
+
             if elapsed_time > threshold_time:
                 skip = True
 
@@ -267,10 +398,10 @@ class Camera:
                 time.sleep(wait_time)
 
             frame_counter += 1
-
-            
-        cap.release()
+        
         cv2.destroyAllWindows()
+
+        
     
     def tracking(self, detections, tracker, shared_data={}):
         """
@@ -472,7 +603,51 @@ class Camera:
             cv2.putText(frame, f"ID: {id}", (x1, y1 - 10), font, 0.5, id_color, thickness)
 
         return frame
-        
+    
+    def projection_manager(self, homography_matrix, xy, flags, cubes, Track_id=None, class_id=None):
+        """
+        Project the points to the top view
+        Args:
+        homography_matrix (numpy.ndarray): The homography matrix
+        xy (tuple): The (x, y) coordinates of the point
+        flags (dict): A dictionary of flags
+        cubes (list): A list of points to be projected
+
+        Returns:
+        None 'Just updates the cubes list'
+        """
+        if not flags[self.number].value:
+            if class_id == 0: # If the object is a car
+                point = self.calculate_middle_point(xy)
+            elif class_id == 1: # If the object is a person
+                # Get the middle of the bottom of the bounding box
+                x1, y1, x2, y2 = xy
+                point = (int((x1 + x2) / 2), y2)
+            
+            original_point = np.array([point], dtype=np.float16)
+
+            # Convert to homogeneous coordinates
+            original_point_homogeneous = np.append(original_point, 1)  # [x, y, 1]
+
+            # Apply the homography matrix
+            projected_point_homogeneous = np.dot(homography_matrix, original_point_homogeneous)
+
+            # Convert back to Cartesian coordinates
+            projected_point = projected_point_homogeneous[:2] / projected_point_homogeneous[2]
+
+            if not flags["Visualizer"].value:
+                if self.number == 1:
+                    if class_id == 0:
+                        cubes.append([projected_point[0], projected_point[1], Track_id, "person"])
+                else:
+                    if class_id == 0:
+                        cubes.append([projected_point[0], projected_point[1], Track_id, "car"])
+                    else:
+                        cubes.append([projected_point[0], projected_point[1], Track_id, "person"])
+            else:
+                pass
+
+        return 
 
     
     def calculate_middle_point(self, coordinates):
@@ -524,7 +699,7 @@ class Camera:
         str: The position of the car relative to the line ('Left' or 'Right')
         """
         if camera_number == 2:
-            line_coordinates = [(0, 215), (1280, 995)]
+            line_coordinates = [(1050, 380), (1450, 690)]
             position = self.object_position(line_coordinates, self.calculate_middle_point(coordinates))
             if position == "above": # This is must be changed based on the used camera.
                 return "Left"
@@ -589,3 +764,57 @@ class Camera:
         bool: True if the object is a person, False otherwise
         """
         return obj[5] == 1
+    
+    def process_rtDETR_frame(self, frame, model, image_processor):
+        """
+        Processes a single frame for object detection.
+        Args:
+        frame (numpy.ndarray): The frame to process
+        model (RTDetrForObjectDetection): The RT-DETR model
+        image_processor (RTDetrImageProcessor): The RT-DETR image processor
+        
+        Returns:
+        list: A list of mimic_result objects
+        """
+        # Save the scales
+        width, height = frame.shape[1], frame.shape[0]
+        width_scale =  width / 640
+        height_scale = height / 640
+
+        frame2 = frame.copy()
+        frame2 = cv2.resize(frame2, (640, 640))
+        with torch.no_grad():
+            inputs = image_processor(images=frame2, return_tensors='pt').to("cuda")
+            outputs = model(**inputs)
+
+            # Post-process
+            target_sizes = torch.tensor([frame2.shape[:2]]).to("cuda")
+            results = image_processor.post_process_object_detection(
+                outputs=outputs,
+                threshold=0.85,
+                target_sizes=target_sizes
+            )[0]
+
+            boxes = []
+
+            for box, score, class_id in zip(results["boxes"], results["scores"], results["labels"]):
+                box = box.cpu().numpy().astype(int)
+                # Multiply the box by the ratio
+                box[0] = int(box[0] * width_scale)
+                box[1] = int(box[1] * height_scale)
+                box[2] = int(box[2] * width_scale)
+                box[3] = int(box[3] * height_scale)
+                score = score.cpu().numpy()
+                class_id = class_id.cpu().numpy()
+
+                # Create a Box object
+                boxes.append([box[0], box[1], box[2], box[3], score, class_id-1])
+
+        return [mimic_result(boxes)]
+
+
+class mimic_result:
+    """This class is used to mimic the box object returned by the YOLO model."""
+    def __init__(self, lst_of_boxes):
+        self.boxes = lst_of_boxes
+        

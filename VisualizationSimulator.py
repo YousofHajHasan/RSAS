@@ -42,7 +42,7 @@ def initialize_scene(ax):
     for x in range(0, 350, 20):
         ax.plot([x, x + 10], [95, 95], [0, 0], color='white', linewidth=1)
 
-    # Plot the house (black)
+    # Plot the house 
     house_base = [
         [70, 250, 0], [290, 250, 0], [290, 410, 0], [70, 410, 0]
     ]
@@ -110,10 +110,18 @@ def initialize_scene(ax):
     sidewalk_poly = Poly3DCollection([sidewalk], color='red', alpha=0.4)
     ax.add_collection3d(sidewalk_poly)
 
+    # Add the green backyard
+    backyard = [
+        [0, 450, 0], [160, 450, 0], [160, 500, 0], [0, 500, 0]
+    ]
+    backyard_poly = Poly3DCollection([backyard], color='green', alpha=0.4)
+    ax.add_collection3d(backyard_poly)
+    
     # Add labels
     ax.text(160, 230, 70, 'House', color='Yellow', fontsize=12, weight='heavy')
     ax.text(300, 230, 35, '1st Garage', color='Yellow', fontsize=12, weight='heavy')
     ax.text(0, 230, 35, '2nd Garage', color='Yellow', fontsize=12, weight='heavy')
+
 
 
 def plot_moving_object(ax, cube_position, cube_artists):
